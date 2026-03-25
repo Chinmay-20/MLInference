@@ -1,0 +1,23 @@
+artifact_path: /Users/chinmay/Documents/mlops_onnx_pytorch/ml-hpc-inference-main/mlruns/1/models/m-1282b65b88bf4dc0ae4ae259299f0c47/artifacts
+flavors:
+  python_function:
+    config:
+      device: null
+    data: data
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pytorch
+    pickle_module_name: mlflow.pytorch.pickle_module
+    python_version: 3.13.12
+  pytorch:
+    code: null
+    model_data: data
+    pytorch_version: 2.11.0
+mlflow_version: 3.10.1
+model_id: m-1282b65b88bf4dc0ae4ae259299f0c47
+model_size_bytes: 7065
+model_uuid: m-1282b65b88bf4dc0ae4ae259299f0c47
+prompts: null
+run_id: 8a836aa2372144029b96a4ee8a8cbd65
+utc_time_created: '2026-03-24 07:47:48.578257'

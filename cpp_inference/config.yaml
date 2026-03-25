@@ -1,0 +1,6 @@
+# cpp_inference/config.yaml
+model:
+  path: "../../models/model.onnx"
+  input_size: 10
+inference:
+  num_threads: 4

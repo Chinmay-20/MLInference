@@ -1,0 +1,11 @@
+torch
+numpy
+onnx
+onnxruntime
+onnxscript
+pytest
+flake8
+
+hydra-core
+omegaconf
+mlflow
