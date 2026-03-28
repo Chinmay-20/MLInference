@@ -1,0 +1,1 @@
+{'training': {'batch_size': 64, 'learning_rate': 0.01, 'epochs': 10, 'seed': 42, 'device': 'cpu'}, 'tracking': {'experiment_name': 'ml-hpc-inference'}, 'model': {'input_size': 10, 'hidden_size': 20, 'output_size': 1}, 'paths': {'raw_data': 'data/raw', 'processed_data': 'data/processed/dataset.pt', 'model_save': 'models/model.pth', 'model_onnx': 'models/model.onnx'}}
