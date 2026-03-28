@@ -1,141 +1,200 @@
-# ML & HPC Inference
+# MLInference
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
-![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue)
-![C++17](https://img.shields.io/badge/C%2B%2B-17-lightgrey)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.1-red)
-![ONNX](https://img.shields.io/badge/ONNX-1.24.1-orange)
-![MLflow](https://img.shields.io/badge/MLflow-2.9-green)
-![Hydra](https://img.shields.io/badge/config-Hydra-89b8cd)
-![pytest](https://img.shields.io/badge/Testing-pytest-brightgreen)
-![Docker](https://img.shields.io/badge/Docker-20.10-blue)
+A hybrid **Python + C++ machine learning inference system** that trains a PyTorch model, exports it to ONNX, and serves predictions through a native **ONNX Runtime C++ backend** exposed via **FastAPI**.
 
+This project started from an ML-to-C++ deployment demo and was extended into a more production-style inference service with:
 
+- dynamic batch ONNX export
+- JSON-based native C++ inference
+- FastAPI endpoints for online prediction
+- request validation
+- latency benchmarking
+- automated API integration tests
 
-<details> <summary><strong>Table of Contents</strong></summary> <ol> <li><a href="#introduction">Introduction</a></li> <li><a href="#workflow-overview">Workflow Overview</a></li> <li><a href="#dataset">Dataset</a></li> <li><a href="#prerequisites">Prerequisites</a></li> <li><a href="#installation">Installation</a></li> <li><a href="#usage">Usage</a></li> <li><a href="#outputs">Outputs</a></li> <li><a href="#docker">Docker</a></li> <li><a href="#continuous-integration">Continuous Integration</a></li> </ol> </details>
+---
 
-## Introduction
+## Architecture
 
-This project demonstrates a full ML & HPC inference pipeline, bridging the gap between Data Science research (Python) and strict Real-Time Production environments (C++), integrating:
-- Training a **PyTorch** MLP model with configurable hyperparameters using **Hydra**.
-- Tracking experiments and artifacts with **MLflow**.
-- Exporting models to **ONNX** format for high-performance inference.
-- Running inference in C++ using ONNX Runtime.
-- Dockerized environments for training and inference.
-- Continuous Integration (CI) via GitHub Actions.
+```text
+Python Training (PyTorch + Hydra + MLflow)
+        |
+        v
+   ONNX Export
+        |
+        v
+C++ Inference Worker (ONNX Runtime)
+        |
+        v
+ FastAPI Service Layer
+        |
+        v
+ REST Endpoints + Benchmarking + Tests
 
-It is designed to showcase **MLOps** practices, deployment readiness, and HPC-aware inference pipelines. 
-**HPC-Ready Architecture**: the **C++** inference engine is designed to be integrated into low-latency environments (e.g., real-time control loops) where Python interpreters are not viable.
+Main components
+    PyTorch training pipeline: trains a small regression model on synthetic data
+    ONNX export: exports the trained model with dynamic batch support
+    C++ inference worker: loads the ONNX model and performs inference using ONNX Runtime
+    FastAPI service: exposes the inference worker through HTTP endpoints
+    Benchmark script: measures latency and throughput
+    Integration tests: validates the API end to end
 
-## Workflow Overview
+## Project Structure
+MLInference/
+├── conf/                     # Hydra configuration
+├── cpp_inference/            # Native C++ inference worker
+│   ├── config.yaml
+│   ├── CMakeLists.txt
+│   └── src/main.cpp
+├── data/                     # Generated dataset
+├── docker/                   # Dockerfiles
+├── ml_src/                   # Python ML training and export code
+│   ├── data_loader.py
+│   ├── export_onnx.py
+│   ├── model.py
+│   └── train.py
+├── models/                   # Saved PyTorch and ONNX models
+├── scripts/                  # Utility scripts
+│   └── benchmark_api.py
+├── service/                  # FastAPI inference service
+│   └── app.py
+├── tests/                    # API integration tests
+│   └── test_service_api.py
+├── requirements.txt
+└── README.md
 
-```mermaid
-flowchart LR
-    A[Python Training<br/>ml_src/train.py] --> B[ONNX Export<br/>models/model.onnx]
-    B --> C[C++ Inference<br/>cpp_inference/main.cpp]
-    B --> D[MLflow Tracking<br/>Experiment & Artifacts]
-    C --> E[Docker Inference<br/>docker/Dockerfile.inference]
-    A --> F[Docker Training<br/>docker/Dockerfile.training]
-    A --> G[CI Pipeline<br/>GitHub Actions]
-    C --> G
-```
+## Features
+    Train a PyTorch model with Hydra-configured settings
+    Track training artifacts with MLflow
+    Export ONNX model with dynamic batch dimension
+    Run inference from a native C++ binary using ONNX Runtime
+    Accept JSON input through stdin or file for C++ inference
+    Serve predictions over HTTP using FastAPI
+    Support both single prediction and batch prediction
+    Benchmark latency and throughput
+    Validate API behavior with automated tests
 
-## Dataset
+## Tech Stack
+    Python 3.13
+    PyTorch
+    Hydra
+    MLflow
+    ONNX
+    ONNX Runtime
+    C++17
+    FastAPI
+    Pytest
+    CMake
+    yaml-cpp
 
-The model uses a synthetic PyTorch dataset, designed to perform a simple regression task.
+## Python Version Requirement
 
-- The dataset can be created or loaded via `ml_src/data_loader.py`.
-- Automatic batching and shuffling are handled in Python training pipeline.
+Use Python 3.13 for this project.
 
-## Prerequisites
-- Python 3.10-3.12 recommended due to Hydra compatibility.
-- PyTorch
-- ONNX & ONNX Runtime
-- Hydra
-- MLflow
-- C++17 compiler
-- CMake
-- Docker
+Hydra has compatibility issues with Python 3.14 in this setup, so training may fail if you create the virtual environment with Python 3.14.
 
-Hardware accelerator recommended for training:
-- NVIDIA GPU (CUDA)
-- Apple MPS (for Apple Silicon)
-- CPU fallback supported
+Check your version:
+python3.13 --version
 
-## Installation
+## Setup
+### 1. Clone the repository
+git clone https://github.com/Chinmay-20/MLInference.git
+cd MLInference
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/marcolacagnina/ml-hpc-inference.git
-    cd ml-hpc-inference/
-    ```
+### 2. Create a virtual environment with Python 3.13
+python3.13 -m venv venv_ml_inference
+source venv_ml_inference/bin/activate
+python -V
 
-2.  **Create a virtual environment (recommended)**
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
+### 3. Install Python dependencies
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
 
-3.  **Install dependencies:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+### Train the Model and Export ONNX
 
-## Usage
-**Training**
-```bash
+From the repo root:
 python ml_src/train.py
-```
-- Logs metrics, configuration, and models to **MLflow**.
-- Saves PyTorch model (`models/model.pth`) and ONNX model (`models/model.onnx`).
 
-**C++ Inference**
+Expected outputs:
+    trained PyTorch model saved in models/model.pth
+    ONNX model saved in models/model.onnx
 
-Build and run
-```bash
-cd cpp_inference/build
-cmake ..
-make -j$(nproc)
-./onnx_inference
-```
-- Loads ONNX model, creates dummy input, runs forward pass.
-- Supports configurable number of threads for HPC-aware inference via `cpp_inference/config.yaml` (**yaml-cpp** configuration file).
+## Build the C++ Inference Worker
+### Native dependencies on macOS
+brew install onnxruntime yaml-cpp cmake
 
-## Outputs
+## Build commands
+    cd cpp_inference
+    rm -rf build
+    mkdir build
+    cd build
 
-- `models/model.pth` → PyTorch trained weights.
-- `models/model.onnx` → ONNX model for C++ inference.
-- `MLflow tracking` → Hyperparameters, metrics, and artifacts.
+    cmake .. \
+    -DONNXRUNTIME_DIR=/opt/homebrew/opt/onnxruntime \
+    -DCMAKE_PREFIX_PATH="$(brew --prefix yaml-cpp);/opt/homebrew/opt/onnxruntime"
 
+    cmake --build . -j$(sysctl -n hw.ncpu)
 
-## Docker
-Training
-```bash
-docker build -f docker/Dockerfile.training -t ml-hpc:training .
-docker run -v $(pwd)/mlruns:/app/mlruns ml-hpc:training
-```
+### Single input
 
-Inference (`amd64` environment)
-```bash
-docker build --platform linux/amd64 -t onnx-cpp-inference-x86 -f docker/Dockerfile.inference .
-docker run --rm --platform linux/amd64 onnx-cpp-inference-x86
-```
- 
-## Continuous Integration
+echo '{"inputs": [[1,2,3,4,5,6,7,8,9,10]]}' | ./onnx_inference --stdin
 
-GitHub Actions pipeline includes:
+### Batch input
 
-1. Python Quality & Testing
-- `flake8` linting
-- `pytest` for unit tests
-- ONNX export verification
+echo '{"inputs": [[1,2,3,4,5,6,7,8,9,10],[10,9,8,7,6,5,4,3,2,1]]}' | ./onnx_inference --stdin
 
-2. C++ Build & Inference Check
-- Downloads ONNX artifact from Python job
-- Builds and runs C++ inference
-- Ensures end-to-end correctness
+### Run the FastAPI Service
 
+From the root repo
+uvicorn service.app:app --reload --host 127.0.0.1 --port 8000
 
+if port 8000 is already in use
+uvicorn service.app:app --reload --host 127.0.0.1 --port 8000
 
+### API Endpoints
+curl http://127.0.0.1:8000/
 
+### Health check
+curl http://127.0.0.1:8000/health
+
+### Single Prediction
+curl -X POST "http://127.0.0.1:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"input":[1,2,3,4,5,6,7,8,9,10]}'
+
+### Batch Prediction
+curl -X POST "http://127.0.0.1:8000/predict_batch" \
+  -H "Content-Type: application/json" \
+  -d '{"inputs":[[1,2,3,4,5,6,7,8,9,10],[10,9,8,7,6,5,4,3,2,1]]}'
+
+### Benchmarking
+python scripts/benchmark_api.py
+
+### API integration tests
+pytest tests/test_service_api.py -v
+
+## Verified Workflow
+
+The following end-to-end flow has been verified locally:
+
+    Train PyTorch model
+    Export ONNX model with dynamic batch support
+    Build native C++ inference worker
+    Run FastAPI service
+    Execute single and batch predictions successfully
+    Measure latency with benchmark script
+    Validate endpoints with automated tests
+
+Why this project matters
+
+This project demonstrates the bridge between:
+    ML experimentation in Python
+    and native inference execution in C++
+
+It shows how to move from a training workflow into a more deployment-oriented system with:
+    reproducible model export
+    native runtime integration
+    service exposure
+    request validation
+    performance measurement
+    automated testing
 
